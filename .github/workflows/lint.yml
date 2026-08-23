@@ -1,0 +1,20 @@
+name: Lint
+
+# Push to main is covered by the deploy workflow's lint job; here we only guard
+# pull requests so failures show up before merge.
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # Fail if any committed PNG is not losslessly optimized (pinned oxipng).
+      - run: npm run lint:png

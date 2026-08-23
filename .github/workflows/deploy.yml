@@ -1,0 +1,64 @@
+name: Deploy
+
+# Lint, then build and publish to GitHub Pages. The build only runs if lint
+# passes, so a failing linter blocks the deployment. PIU_WEB_SERVER and
+# VITE_GOOGLE_AUTH_APP_ID are repository Variables baked into the bundle at build
+# time (see vite.config.ts and the VITE_ prefix). The custom domain comes from
+# public/CNAME, which Vite copies into dist/.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow one concurrent deployment; let an in-progress run finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # Fail if any committed PNG is not losslessly optimized (pinned oxipng).
+      - run: npm run lint:png
+
+  build:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          PIU_WEB_SERVER: ${{ vars.PIU_WEB_SERVER }}
+          VITE_GOOGLE_AUTH_APP_ID: ${{ vars.VITE_GOOGLE_AUTH_APP_ID }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
