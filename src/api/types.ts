@@ -78,6 +78,15 @@ export interface Enriched {
   chart_type: ChartType;
   legacy_score: number;
   new_score: number;
+  // failed marks a play whose stage was broken. legacy_score is still the score
+  // the cabinet displayed, but new_score is 0.
+  failed: boolean;
+  // ended_early is true when the stage broke part-way (short play time) rather
+  // than running to the end on a failing grade.
+  ended_early: boolean;
+  // play_secs is how many seconds of the chart were played; 0 when the cabinet
+  // did not report it.
+  play_secs: number;
   grade: Grade;
   plate: Plate;
   n_perfect: number;
@@ -121,4 +130,11 @@ export interface SongResponse {
 export interface SongChartResponse {
   best: Enriched | null;
   attempts: Enriched[];
+}
+
+// A play that failed, either by grading F or by the stage breaking part-way.
+// Both are rendered the same way: muted, with no plate badge, since the plate
+// describes a clear quality the play never earned.
+export function isFailed(r: Pick<Enriched, "failed" | "ended_early">): boolean {
+  return r.failed || r.ended_early;
 }

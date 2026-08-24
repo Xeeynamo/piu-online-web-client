@@ -662,6 +662,36 @@ input {
   }
 }
 /* Ambient corner glow tinted by the chart's mode color. */
+/* A failed or early-broken play in a ScoreCard, muted the same way as in an
+   AttemptCard: the background, score and grade badge lose saturation while the
+   judgments and title stay readable. */
+.score-card-is-failed {
+  background-image: none;
+  border-left-color: color-mix(in srgb, var(--card-accent) 25%, var(--border));
+}
+.score-card-is-failed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 14%, transparent) 0%, transparent 42%),
+    linear-gradient(180deg, var(--bg-panel) 0%, color-mix(in srgb, var(--bg) 55%, var(--bg-panel)) 100%);
+  filter: saturate(0.25);
+}
+.score-card-is-failed .score-card-glow {
+  filter: saturate(0.25);
+}
+.score-card-is-failed .score-card-score,
+.score-card-is-failed .grade-badge {
+  filter: saturate(0.25);
+}
+.score-card-broke {
+  color: #ff6b6b;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 .score-card-glow {
   position: absolute;
   top: -40%;
@@ -848,6 +878,33 @@ input {
     0 12px 30px -14px color-mix(in srgb, var(--card-accent) 65%, transparent),
     0 3px 10px rgba(0, 0, 0, 0.35);
 }
+/* A failed or early-broken play, muted so it does not read as an achievement
+   beside a real clear.
+
+   Only the three surfaces that signal success are desaturated: the card
+   background, the score, and the grade badge. The judgment counts, the failure
+   marker and the settings keep their colour, since they are what the reader
+   needs from a failed play. The background is filtered through a ::before layer
+   rather than on .attempt-card itself, because a filter on the card would also
+   catch every child and defeat that split. */
+.attempt-card-is-failed {
+  background-image: none;
+  border-left-color: color-mix(in srgb, var(--card-accent) 25%, var(--border));
+}
+.attempt-card-is-failed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 12%, transparent) 0%, transparent 45%),
+    linear-gradient(180deg, var(--bg-panel) 0%, color-mix(in srgb, var(--bg) 55%, var(--bg-panel)) 100%);
+  filter: saturate(0.25);
+}
+.attempt-card-is-failed .attempt-card-score,
+.attempt-card-is-failed .grade-badge {
+  filter: saturate(0.25);
+}
 .attempt-card-main {
   flex: 1;
   min-width: 0;
@@ -886,6 +943,18 @@ input {
   color: var(--text-h);
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
+}
+/* Failure marker, shown beside the zeroed New Score so a 0 reads as a failed
+   stage rather than as missing data. Carries the legacy score the cabinet
+   actually displayed. */
+.attempt-card-failed {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ff6b6b;
+  font-variant-numeric: tabular-nums;
 }
 .attempt-card-time {
   margin-top: 4px;
@@ -1177,6 +1246,25 @@ input {
   transition-duration: 0.08s;
 }
 /* Unplayed charts read muted until hovered. */
+/* Same muting for the compact chart row on the song page. */
+.chart-row-is-failed {
+  background-image: none;
+  border-left-color: color-mix(in srgb, var(--row-accent) 25%, var(--border));
+}
+.chart-row-is-failed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--row-accent) 9%, transparent) 0%, transparent 45%),
+    var(--bg-panel);
+  filter: saturate(0.25);
+}
+.chart-row-is-failed .chart-score,
+.chart-row-is-failed .grade-badge {
+  filter: saturate(0.25);
+}
 .chart-row-unplayed {
   opacity: 0.62;
   filter: saturate(0.7);

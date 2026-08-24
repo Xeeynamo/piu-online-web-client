@@ -1,3 +1,4 @@
+import { isFailed } from "../api/types";
 import type { ChartType, Enriched, ModeFamily } from "../api/types";
 import { songById } from "../data/songs";
 import { Stepball } from "./Stepball";
@@ -42,9 +43,11 @@ export function ScoreCard({ result, onClick }: ScoreCardProps) {
   const song = songById(result.song_id);
   const title = result.song_title ?? song?.title ?? result.song_id;
   const artist = song?.artist;
+  // A failed play is muted and drops the plate, matching AttemptCard.
+  const failed = isFailed(result);
   return (
     <div
-      class="score-card"
+      class={`score-card${failed ? " score-card-is-failed" : ""}`}
       style={{ "--card-accent": accent }}
       onClick={onClick}
       role={onClick ? "button" : undefined}
@@ -65,12 +68,21 @@ export function ScoreCard({ result, onClick }: ScoreCardProps) {
 
       <div class="score-card-body">
         <GradeBadge grade={result.grade} />
-        <PlateBadge plate={result.plate} />
+        {!failed && <PlateBadge plate={result.plate} />}
         <div class="score-card-scoreblock">
           <div class="score-card-score">{result.new_score.toLocaleString()}</div>
           {result.legacy_score > 0 && (
             <div class="score-card-legacy">
-              Legacy <b>{result.legacy_score.toLocaleString()}</b>
+              {failed ? (
+                <span class="score-card-broke">
+                  {result.ended_early ? "Broke" : "Failed"} &middot;{" "}
+                  <b>{result.legacy_score.toLocaleString()}</b>
+                </span>
+              ) : (
+                <>
+                  Legacy <b>{result.legacy_score.toLocaleString()}</b>
+                </>
+              )}
             </div>
           )}
         </div>

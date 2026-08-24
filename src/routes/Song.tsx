@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
 import { api } from "../api/client";
+import { isFailed } from "../api/types";
 import type { ChartType, ModeFamily, SongResponse } from "../api/types";
 import { GradeBadge } from "../components/GradeBadge";
 import { PlateBadge } from "../components/PlateBadge";
@@ -44,7 +45,9 @@ export function Song({ card, songId }: { card: string; songId: string }) {
         {song.charts.map((c, i) => (
           <div
             key={i}
-            class={`chart-row${c.best ? "" : " chart-row-unplayed"}`}
+            class={`chart-row${c.best ? "" : " chart-row-unplayed"}${
+              c.best && isFailed(c.best) ? " chart-row-is-failed" : ""
+            }`}
             style={{ "--row-accent": chartAccent(c.chart_type, c.mode_family) }}
             onClick={() => location.route(`/player/${card}/song/${songId}/${c.mode_family}/${c.level}`)}
           >
@@ -52,7 +55,7 @@ export function Song({ card, songId }: { card: string; songId: string }) {
             {c.best ? (
               <div class="chart-result">
                 <GradeBadge grade={c.best.grade} />
-                <PlateBadge plate={c.best.plate} />
+                {!isFailed(c.best) && <PlateBadge plate={c.best.plate} />}
                 <span class="chart-score">{c.best.new_score.toLocaleString()}</span>
               </div>
             ) : (

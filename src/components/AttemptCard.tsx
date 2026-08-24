@@ -1,3 +1,4 @@
+import { isFailed } from "../api/types";
 import type { ChartType, Enriched, ModeFamily } from "../api/types";
 import { GradeBadge } from "./GradeBadge";
 import { PlateBadge } from "./PlateBadge";
@@ -25,6 +26,13 @@ function accentFor(chartType: ChartType, modeFamily: ModeFamily): string {
   return FAMILY_ACCENT[modeFamily];
 }
 
+// Rush is only worth showing when it actually alters the play. The cabinet
+// reports 1.0 for the neutral multiplier and 0 when the setting is off, so
+// neither value tells the reader anything.
+function showRush(rush: number): boolean {
+  return rush !== 0 && rush !== 1;
+}
+
 function speedLabel(r: Enriched): string {
   return r.auto_vel ? `AV ${r.auto_velocity}` : `${r.speed.toFixed(1)}x`;
 }
@@ -49,16 +57,32 @@ export function AttemptCard({ result }: AttemptCardProps) {
     { label: "Miss", value: result.n_miss, cls: "judgment-miss" },
   ];
 
+  // A failed play is rendered muted: the colour still identifies the chart, but
+  // it should not read as an achievement next to a real clear. The plate is
+  // dropped entirely, since it describes clear quality the play never earned.
+  const failed = isFailed(result);
+
   return (
-    <div class="attempt-card" style={{ "--card-accent": accent }}>
+    <div
+      class={`attempt-card${failed ? " attempt-card-is-failed" : ""}`}
+      style={{ "--card-accent": accent }}
+    >
       <div class="attempt-card-main">
         <div class="attempt-card-topline">
           <div class="attempt-card-badges">
             <GradeBadge grade={result.grade} />
-            <PlateBadge plate={result.plate} />
+            {!failed && <PlateBadge plate={result.plate} />}
           </div>
           <div class="attempt-card-scoreblock">
             <div class="attempt-card-score">{result.new_score.toLocaleString()}</div>
+            {/* A failed stage scores 0, which would otherwise read as a data
+                error. Show the marker and the score the cabinet displayed. */}
+            {failed && (
+              <div class="attempt-card-failed">
+                {result.ended_early ? "Broke" : "Failed"} &middot;{" "}
+                {result.legacy_score.toLocaleString()}
+              </div>
+            )}
             {when && <div class="attempt-card-time">{when}</div>}
           </div>
         </div>
@@ -82,10 +106,12 @@ export function AttemptCard({ result }: AttemptCardProps) {
           <span class="attempt-setting-label">{result.auto_vel ? "Auto Velocity" : "Speed"}</span>
           <span class="attempt-setting-value">{speedLabel(result)}</span>
         </div>
-        <div class="attempt-setting">
-          <span class="attempt-setting-label">Rush</span>
-          <span class="attempt-setting-value">{result.rush.toFixed(1)}</span>
-        </div>
+        {showRush(result.rush) && (
+          <div class="attempt-setting">
+            <span class="attempt-setting-label">Rush</span>
+            <span class="attempt-setting-value">{result.rush.toFixed(1)}</span>
+          </div>
+        )}
       </div>
     </div>
   );
