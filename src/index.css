@@ -311,7 +311,8 @@ input {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  width: 9ch;
+  box-sizing: border-box;
+  width: calc(19.25ch + 28px);
   padding: 4px 8px;
 }
 .name-save[disabled] {
