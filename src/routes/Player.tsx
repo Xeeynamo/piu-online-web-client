@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { useLocation } from "preact-iso";
-import { api } from "../api/client";
+import { ApiError, api } from "../api/client";
 import type { Enriched, Grade, Plate, PlayerSummary } from "../api/types";
 import { GradeBadge } from "../components/GradeBadge";
 import { PlateBadge } from "../components/PlateBadge";
@@ -19,6 +19,94 @@ const PLATE_ORDER: Plate[] = [
 // A grade or plate selection to drill into.
 type Drill = { kind: "grade"; value: Grade } | { kind: "plate"; value: Plate };
 
+// Player name rules, mirroring ValidatePlayerName on the server. The cabinet
+// renders the name from a 12-byte field, so 8 never truncates.
+const NAME_PATTERN = /^[A-Z0-9_]{3,8}$/;
+const NAME_RULE = "3 to 8 characters: A-Z, 0-9 or _";
+
+// NameEditor renders the player name, and swaps to an input when editing.
+function NameEditor({
+  card,
+  name,
+  onRenamed,
+}: {
+  card: string;
+  name: string;
+  onRenamed: (name: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  if (!editing) {
+    return (
+      <div class="player-name-row">
+        <div class="player-name">{name}</div>
+        <button
+          type="button"
+          class="name-edit-button"
+          title="Change name"
+          onClick={() => {
+            setValue(name);
+            setError(null);
+            setEditing(true);
+          }}
+        >
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  const valid = NAME_PATTERN.test(value);
+
+  const save = async () => {
+    if (!valid || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await api.setPlayerName(card, value);
+      onRenamed(res.player_name);
+      setEditing(false);
+    } catch (e) {
+      // The server states the rule it rejected on; show that rather than a
+      // generic failure.
+      setError(e instanceof ApiError ? e.message : "Could not save the name");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div class="player-name-edit">
+      <div class="player-name-row">
+        <input
+          class="name-input"
+          value={value}
+          maxLength={8}
+          autoFocus
+          aria-label="Player name"
+          // Uppercased as the user types, so the only way to see the
+          // lowercase error is a direct API call.
+          onInput={(e) => setValue((e.currentTarget as HTMLInputElement).value.toUpperCase())}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save();
+            if (e.key === "Escape") setEditing(false);
+          }}
+        />
+        <button type="button" class="name-save" disabled={!valid || saving} onClick={save}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+        <button type="button" class="name-cancel" onClick={() => setEditing(false)}>
+          Cancel
+        </button>
+      </div>
+      <div class={error ? "name-hint name-hint-error" : "name-hint"}>{error ?? NAME_RULE}</div>
+    </div>
+  );
+}
+
 export function Player({ card }: { card: string }) {
   const [summary, setSummary] = useState<PlayerSummary | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
@@ -36,7 +124,11 @@ export function Player({ card }: { card: string }) {
       <div class="player-banner">
         <img src={`/assets/avatars/${summary.avatar_index}.png`} alt="" class="player-avatar" />
         <div class="player-banner-info">
-          <div class="player-name">{summary.player_name}</div>
+          <NameEditor
+            card={card}
+            name={summary.player_name}
+            onRenamed={(player_name) => setSummary({ ...summary, player_name })}
+          />
           <div class="player-meta">
             <span class="player-level-badge">
               <span>Lv</span> {summary.level}
@@ -151,7 +243,7 @@ function DrillModal({ card, drill, onClose }: { card: string; drill: Drill; onCl
               <ScoreCard
                 key={i}
                 result={c}
-                onClick={() => location.route(`/player/${card}/song/${c.song_id}`)}
+                onClick={() => location.route(`/player/${card}/song/${c.song_id}/${c.mode_family}/${c.difficulty}`)}
               />
             ))}
           </div>

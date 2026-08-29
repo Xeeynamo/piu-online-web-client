@@ -281,6 +281,54 @@ input {
   color: var(--text-h);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
+/* The name and its edit control sit on one line; the button stays out of the
+   way until hovered, so the banner still reads as a name rather than a form. */
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.name-edit-button {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  opacity: 0.65;
+}
+.player-name-row:hover .name-edit-button {
+  opacity: 1;
+  color: var(--text);
+}
+.player-name-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.name-input {
+  /* Matches .player-name so the field sits where the name was. */
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: 9ch;
+  padding: 4px 8px;
+}
+.name-save[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.name-save[disabled]:hover {
+  border-color: var(--border);
+}
+.name-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.name-hint-error {
+  color: #ff6b6b;
+}
+
 .player-meta {
   display: flex;
   flex-wrap: wrap;

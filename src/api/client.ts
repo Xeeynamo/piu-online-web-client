@@ -67,6 +67,12 @@ export const api = {
 
   summary: (card: string) => request<PlayerSummary>(`/player/${card}/summary`),
 
+  setPlayerName: (card: string, playerName: string) =>
+    request<{ player_name: string }>(`/player/${card}/name`, {
+      method: "PUT",
+      body: JSON.stringify({ player_name: playerName }),
+    }),
+
   recent: (card: string, opts?: { limit?: number; before?: number }) => {
     const params = new URLSearchParams();
     if (opts?.limit) params.set("limit", String(opts.limit));
