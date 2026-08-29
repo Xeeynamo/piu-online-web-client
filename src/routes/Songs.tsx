@@ -36,7 +36,7 @@ function RecentlyPlayed({ card }: { card: string }) {
         <ScoreCard
           key={i}
           result={a}
-          onClick={() => location.route(`/player/${card}/song/${a.song_id}`)}
+          onClick={() => location.route(`/player/${card}/song/${a.song_id}/${a.mode_family}/${a.difficulty}`)}
         />
       ))}
     </div>
@@ -88,7 +88,7 @@ function BestScores({ card }: { card: string }) {
             <ScoreCard
               key={i}
               result={c}
-              onClick={() => location.route(`/player/${card}/song/${c.song_id}`)}
+              onClick={() => location.route(`/player/${card}/song/${c.song_id}/${c.mode_family}/${c.difficulty}`)}
             />
           ))}
         </div>
